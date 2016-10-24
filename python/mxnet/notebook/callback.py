@@ -213,10 +213,13 @@ class LiveLearningCurve(LiveBokehChart):
         # I can't figure it out though.  Ask a pyData expert.
         self.x1 = []
         self.y1 = []
-        self.fig.circle(self.x1,self.y1, size=1.5, alpha=0.5, legend="train")
+        self.train1 = self.fig.line(self.x1,self.y1, line_dash='dotted', alpha=0.3, legend="train")
+        self.train2 = self.fig.circle(self.x1,self.y1, size=1.5, alpha=0.3, legend="train")
+        self.train2.visible = False  # Turn this on later.
         self.x2 = []
         self.y2 = []
-        self.fig.line(self.x2,self.y2, line_color='green', line_width=2, legend="validation")
+        self.valid1 = self.fig.line(self.x2,self.y2, line_color='green', line_width=2, legend="validation")
+        self.valid2 = self.fig.circle(self.x2,self.y2, line_color='green', line_width=2, legend=None)
         self.fig.legend.location = "bottom_right"
         self.fig.yaxis.axis_label = self.metric_name
         return bokeh.plotting.show(self.fig, notebook_handle=True)
@@ -235,6 +238,9 @@ class LiveLearningCurve(LiveBokehChart):
         if len(df):
             self._extend(self.x2, df.elapsed)
             self._extend(self.y2, df[self.metric_name])
+        if len(df) > 10:
+            self.train1.visible = False
+            self.train2.visible = True
 
 
 def args_wrapper(*args):

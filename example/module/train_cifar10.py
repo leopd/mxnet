@@ -17,7 +17,7 @@ def command_line_args(defaults=False):
     parser = argparse.ArgumentParser(description=__doc__,
                     formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--network', type=str, default='inception-bn-28-small',
-                        help = 'the cnn to use')
+                        help = 'which CNN style to use')
     my_dir = os.path.dirname(__file__)
     default_data_dir = os.path.abspath(os.path.join(my_dir, '..', 'image-classification', 'cifar10')) + '/'
     parser.add_argument('--data-dir', type=str, default=default_data_dir,
