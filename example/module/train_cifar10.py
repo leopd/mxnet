@@ -92,7 +92,7 @@ def get_iterator(args, kv):
     return (train, val)
 
 
-def do_train(args):
+def do_train(args, callback_args=None):
     # network
     net = importlib.import_module('symbol_' + args.network).get_symbol(10)
 
@@ -165,12 +165,20 @@ def do_train(args):
     else:
         begin_epoch = 0
 
+    if not callback_args:
+        callback_args = {
+            'batch_end_callback': mx.callback.Speedometer(args.batch_size, 50),
+            'epoch_end_callback': checkpoint,
+        }
+    else:
+        pass
+        #TODO: add checkpoint back in
+
     logging.info('start training for %d epochs...', args.num_epochs)
     mod.fit(train, eval_data=val, optimizer_params=optim_args,
             eval_metric=eval_metrics, num_epoch=args.num_epochs,
             arg_params=arg_params, aux_params=aux_params, begin_epoch=begin_epoch,
-            batch_end_callback=mx.callback.Speedometer(args.batch_size, 50),
-            epoch_end_callback=checkpoint)
+            **callback_args)
 
 if __name__ == "__main__":
     args = command_line_args()
