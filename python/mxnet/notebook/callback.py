@@ -125,7 +125,10 @@ class LiveBokehChart(object):
     """
 
     def __init__(self, pandas_logger, metric_name, update_freq=15):
-        self.pandas_logger = pandas_logger
+        if pandas_logger:
+            self.pandas_logger = pandas_logger
+        else:
+            self.pandas_logger = PandasLogger()
         self.update_freq = update_freq
         self.last_update = time.time() 
         #NOTE: would be nice to auto-detect the metric_name if there's only one.
@@ -205,14 +208,16 @@ class LiveLearningCurve(LiveBokehChart):
         self.fig = bokeh.plotting.Figure(x_axis_type='datetime', 
                 x_axis_label='Training time')
         #TODO(leodirac): There's got to be a better way to 
-        # get a bokeh plot to dynamically update as a pandas dataframe changes.
+        # get a bokeh plot to dynamically update as a pandas dataframe changes,
+        # instead of copying into a list.
         # I can't figure it out though.  Ask a pyData expert.
         self.x1 = []
         self.y1 = []
-        self.fig.line(self.x1,self.y1, line_dash='dotted', legend="train")
+        self.fig.circle(self.x1,self.y1, size=1.5, alpha=0.5, legend="train")
         self.x2 = []
         self.y2 = []
-        self.fig.line(self.x2,self.y2, legend="validation")
+        self.fig.line(self.x2,self.y2, line_color='green', line_width=2, legend="validation")
+        self.fig.legend.location = "bottom_right"
         self.fig.yaxis.axis_label = self.metric_name
         return bokeh.plotting.show(self.fig, notebook_handle=True)
 
