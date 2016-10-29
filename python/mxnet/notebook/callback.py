@@ -82,13 +82,14 @@ class PandasLogger(object):
 
     def _process_batch(self, param, df):
         now = time.time()
-        speed = self.frequent * self.batch_size / (now - self.last_time)
         if param.eval_metric is not None:
             metrics = dict(param.eval_metric.get_name_value())
             param.eval_metric.reset()
         else:
             metrics = {}
-        metrics['speed'] = speed
+        speed = self.frequent / (now - self.last_time)
+        metrics['batches_per_sec'] = speed * self.batch_size
+        metrics['records_per_sec'] = speed 
         metrics['elapsed'] = self.elapsed()
         metrics['minibatch_count'] = param.nbatch
         metrics['epoch'] = param.epoch
@@ -124,12 +125,13 @@ class LiveBokehChart(object):
     This is an abstract base-class.  Sub-classes define the specific chart.
     """
 
-    def __init__(self, pandas_logger, metric_name, update_freq=15):
+    def __init__(self, pandas_logger, metric_name, display_freq=10, 
+                 batch_size=None, frequent=50):
         if pandas_logger:
             self.pandas_logger = pandas_logger
         else:
-            self.pandas_logger = PandasLogger()
-        self.update_freq = update_freq
+            self.pandas_logger = PandasLogger(batch_size=batch_size, frequent=frequent)
+        self.display_freq = display_freq
         self.last_update = time.time() 
         #NOTE: would be nice to auto-detect the metric_name if there's only one.
         self.metric_name = metric_name
@@ -147,7 +149,7 @@ class LiveBokehChart(object):
         raise NotImplementedError("Incomplete base class: LiveBokehChart must be sub-classed")
 
     def interval_elapsed(self):
-        return time.time() - self.last_update > self.update_freq
+        return time.time() - self.last_update > self.display_freq
 
     def _push_render(self):
         bokeh.io.push_notebook(handle=self.handle)
@@ -213,8 +215,10 @@ class LiveLearningCurve(LiveBokehChart):
         # I can't figure it out though.  Ask a pyData expert.
         self.x1 = []
         self.y1 = []
-        self.train1 = self.fig.line(self.x1,self.y1, line_dash='dotted', alpha=0.3, legend="train")
-        self.train2 = self.fig.circle(self.x1,self.y1, size=1.5, alpha=0.3, legend="train")
+        self.train1 = self.fig.line(self.x1,self.y1, line_dash='dotted', 
+                alpha=0.3, legend="train")
+        self.train2 = self.fig.circle(self.x1,self.y1, size=1.5, 
+                line_alpha=0.3, fill_alpha=0.3, legend="train")
         self.train2.visible = False  # Turn this on later.
         self.x2 = []
         self.y2 = []
