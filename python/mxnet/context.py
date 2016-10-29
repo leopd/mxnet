@@ -124,3 +124,24 @@ def current_context():
     default_ctx : Context
     """
     return Context.default_ctx
+
+
+def autogpu():
+    """Returns a context which attempts to automatically discovery
+    all available GPUs.  Falls back on CPU if none will initialize.
+    """
+    gpu_ctxs = []
+    try: # Try to build a list of GPU contexts
+        for gpuid in range(64):
+            # Create the context
+            ctx = mx.gpu(gpuid)
+            # try loading a trivial NDArray onto the context to see if it is working.
+            mx.nd.array([0],ctx)
+            gpu_ctxs.append(ctx)
+    except mx.MXNetError:
+        # This GPU failed, so break out of the list
+        pass
+    if len(gpu_ctxs) > 0:
+        return gpu_ctxs
+    else:
+        return mx.cpu()
