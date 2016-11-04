@@ -206,6 +206,20 @@ class LiveLearningCurve(LiveBokehChart):
     over time as the network trains.
     """
 
+    def __init__(self, metric_name, display_freq=10, frequent=50):
+        self.display_freq = display_freq
+        self.frequent = frequent
+        self.last_update = time.time()
+        self.start_time = datetime.datetime.now()
+        #NOTE: would be nice to auto-detect the metric_name if there's only one.
+        self.metric_name = metric_name
+        self._dataframes = {
+            'train': {'elapsed': [],},
+            'eval': {'elapsed': [],},
+        }
+        bokeh.io.output_notebook()
+        self.handle = self.setup_chart()
+
     def setup_chart(self):
         self.fig = bokeh.plotting.Figure(x_axis_type='datetime', 
                 x_axis_label='Training time')
@@ -233,16 +247,43 @@ class LiveLearningCurve(LiveBokehChart):
         """
         a.extend(b[len(a):])
 
-    def update_chart_data(self, dataframes):
-        df = dataframes['train']
-        if len(df):
-            self._extend(self.x1, df.elapsed)
+    def _do_update(self):
+        self.update_chart_data()
+        self._push_render()
+
+    def batch_cb(self, param):
+        if param.nbatch % self.frequent == 0:
+            self._process_batch(param, 'train')
+        if self.interval_elapsed():
+            self._do_update()
+        
+    def eval_cb(self, param):
+        # After eval results, force an update.
+        self._process_batch(param, 'eval')
+        self._do_update()
+
+    def _process_batch(self, param, df_name):
+        if param.eval_metric is not None:
+            metrics = dict(param.eval_metric.get_name_value())
+            param.eval_metric.reset()
+        else:
+            metrics = {}
+        metrics['elapsed'] = datetime.datetime.now() - self.start_time
+        for key, value in metrics.items():
+            if not self._dataframes[df_name].has_key(key):
+                self._dataframes[df_name][key] = []
+            self._dataframes[df_name][key].append(value)
+
+    def update_chart_data(self):
+        df = self._dataframes['train']
+        if len(df['elapsed']):
+            self._extend(self.x1, df['elapsed'])
             self._extend(self.y1, df[self.metric_name])
-        df = dataframes['eval']
-        if len(df):
-            self._extend(self.x2, df.elapsed)
+        df = self._dataframes['eval']
+        if len(df['elapsed']):
+            self._extend(self.x2, df['elapsed'])
             self._extend(self.y2, df[self.metric_name])
-        if len(df) > 10:
+        if len(df['elapsed']) > 10:
             self.train1.visible = False
             self.train2.visible = True
 
