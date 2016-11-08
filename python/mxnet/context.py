@@ -126,6 +126,8 @@ def current_context():
     return Context.default_ctx
 
 
+#TODO: This doesn't work here.
+# Adds a dependency on NDArray, which might not be desirable.
 def autogpu():
     """Returns a context which attempts to automatically discovery
     all available GPUs.  Falls back on CPU if none will initialize.
