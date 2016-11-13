@@ -213,7 +213,7 @@ class LiveLearningCurve(LiveBokehChart):
         self.start_time = datetime.datetime.now()
         #NOTE: would be nice to auto-detect the metric_name if there's only one.
         self.metric_name = metric_name
-        self._dataframes = {
+        self._data = {
             'train': {'elapsed': [],},
             'eval': {'elapsed': [],},
         }
@@ -270,20 +270,20 @@ class LiveLearningCurve(LiveBokehChart):
             metrics = {}
         metrics['elapsed'] = datetime.datetime.now() - self.start_time
         for key, value in metrics.items():
-            if not self._dataframes[df_name].has_key(key):
-                self._dataframes[df_name][key] = []
-            self._dataframes[df_name][key].append(value)
+            if not self._data[df_name].has_key(key):
+                self._data[df_name][key] = []
+            self._data[df_name][key].append(value)
 
     def update_chart_data(self):
-        df = self._dataframes['train']
+        df = self._data['train']
         if len(df['elapsed']):
             self._extend(self.x1, df['elapsed'])
             self._extend(self.y1, df[self.metric_name])
-        df = self._dataframes['eval']
+        df = self._data['eval']
         if len(df['elapsed']):
             self._extend(self.x2, df['elapsed'])
             self._extend(self.y2, df[self.metric_name])
-        if len(df['elapsed']) > 10:
+        if len(df) > 10:
             self.train1.visible = False
             self.train2.visible = True
 
