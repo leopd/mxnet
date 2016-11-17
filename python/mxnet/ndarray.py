@@ -313,7 +313,8 @@ class NDArray(object):
                                 'type %s is not supported' % str(type(array)))
         source_array = np.ascontiguousarray(source_array, dtype=self.dtype)
         if source_array.shape != self.shape:
-            raise ValueError('array shape do not match the shape of NDArray')
+            raise ValueError('shape of array to copy %s does not match the shape of this NDArray %s' % (
+                str(source_array.shape), str(self.shape)))
         check_call(_LIB.MXNDArraySyncCopyFromCPU(
             self.handle,
             source_array.ctypes.data_as(ctypes.c_void_p),
